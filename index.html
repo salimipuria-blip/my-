@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bison Z — Weekly Content System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --black:     #0A0A0A;
+    --void:      #111111;
+    --surface:   #161616;
+    --border:    #222222;
+    --muted:     #333333;
+    --dim:       #666666;
+    --mid:       #999999;
+    --light:     #CCCCCC;
+    --white:     #F2F2F2;
+
+    /* Bison Z signature palette */
+    --acid:      #C8FF00;       /* electric lime — energy, Gen Z */
+    --fire:      #FF4D1A;       /* volcanic orange — adventure, heat */
+    --ice:       #00D4FF;       /* glacier blue — freedom, sky */
+    --night:     #7B2FFF;       /* deep purple — mystery, night sky */
+
+    --r: 1rem;
+    --r-sm: .5rem;
+    --r-lg: 1.5rem;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── GRID LINES ── */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,255,0,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,255,0,.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── LAYOUT ── */
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 60px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 60px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .logo-area {}
+
+  .logo-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--acid);
+    margin-bottom: 12px;
+  }
+
+  .logo-title {
+    font-size: clamp(48px, 8vw, 80px);
+    font-weight: 700;
+    line-height: .95;
+    letter-spacing: -.03em;
+    color: var(--white);
+  }
+
+  .logo-title span {
+    color: var(--acid);
+    display: inline-block;
+    animation: flicker 4s ease-in-out infinite;
+  }
+
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: .4; }
+    97% { opacity: 1; }
+    98% { opacity: .2; }
+    99% { opacity: 1; }
+  }
+
+  .logo-sub {
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--dim);
+    max-width: 380px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .header-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border: 1px solid;
+  }
+
+  .badge-acid { border-color: var(--acid); color: var(--acid); background: rgba(200,255,0,.06); }
+  .badge-fire { border-color: var(--fire); color: var(--fire); background: rgba(255,77,26,.06); }
+  .badge-ice  { border-color: var(--ice);  color: var(--ice);  background: rgba(0,212,255,.06); }
+
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+  /* ── SECTION HEADERS ── */
+  .section {
+    margin-bottom: 60px;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-title {
+    font-size: clamp(22px, 3vw, 30px);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    margin-bottom: 8px;
+  }
+
+  /* ── WEEKLY CALENDAR ── */
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .calendar-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .calendar-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .day-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--card-glow, transparent);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+
+  .day-card:hover { transform: translateY(-4px); }
+  .day-card:hover::before { opacity: 1; }
+
+  .day-card.sat { --card-color: var(--acid);   --card-glow: linear-gradient(135deg, rgba(200,255,0,.07) 0%, transparent 70%); }
+  .day-card.sun { --card-color: var(--fire);   --card-glow: linear-gradient(135deg, rgba(255,77,26,.07) 0%, transparent 70%); }
+  .day-card.mon { --card-color: var(--ice);    --card-glow: linear-gradient(135deg, rgba(0,212,255,.07) 0%, transparent 70%); }
+  .day-card.tue { --card-color: var(--night);  --card-glow: linear-gradient(135deg, rgba(123,47,255,.07) 0%, transparent 70%); }
+  .day-card.wed { --card-color: var(--fire);   --card-glow: linear-gradient(135deg, rgba(255,77,26,.07) 0%, transparent 70%); }
+  .day-card.thu { --card-color: var(--acid);   --card-glow: linear-gradient(135deg, rgba(200,255,0,.07) 0%, transparent 70%); }
+  .day-card.fri { --card-color: #444;          --card-glow: linear-gradient(135deg, rgba(80,80,80,.05) 0%, transparent 70%); }
+
+  .day-card:hover { border-color: var(--card-color); box-shadow: 0 0 24px color-mix(in srgb, var(--card-color) 15%, transparent); }
+
+  .day-card .day-accent {
+    position: absolute;
+    top: 0; right: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--card-color);
+    border-radius: 0 var(--r) var(--r) 0;
+  }
+
+  .day-emoji { font-size: 28px; margin-bottom: 10px; display: block; }
+
+  .day-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--card-color);
+    margin-bottom: 4px;
+  }
+
+  .day-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+
+  .day-goal {
+    font-size: 11px;
+    color: var(--dim);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  .day-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .day-task {
+    font-size: 11px;
+    color: var(--mid);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .day-task::before {
+    content: '';
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--card-color);
+    flex-shrink: 0;
+  }
+
+  .day-publish {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .publish-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--card-color);
+    padding: 3px 8px;
+    border: 1px solid color-mix(in srgb, var(--card-color) 30%, transparent);
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+
+  .publish-theme {
+    font-size: 11px;
+    color: var(--mid);
+    font-style: italic;
+  }
+
+  .rest-card {
+    opacity: .45;
+  }
+
+  .rest-card .day-accent { background: var(--muted); }
+  .rest-card:hover { transform: none; border-color: var(--border); box-shadow: none; }
+
+  /* ── CONTENT DISTRIBUTION ── */
+  .dist-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 700px) { .dist-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .dist-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 24px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dist-fill {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%;
+    height: var(--pct);
+    transition: height 1s cubic-bezier(.16,1,.3,1);
+  }
+
+  .dist-card:nth-child(1) .dist-fill { background: linear-gradient(to top, rgba(200,255,0,.1), transparent); }
+  .dist-card:nth-child(2) .dist-fill { background: linear-gradient(to top, rgba(0,212,255,.1), transparent); }
+  .dist-card:nth-child(3) .dist-fill { background: linear-gradient(to top, rgba(255,77,26,.1), transparent); }
+  .dist-card:nth-child(4) .dist-fill { background: linear-gradient(to top, rgba(123,47,255,.1), transparent); }
+
+  .dist-pct {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+    line-height: 1;
+    margin-bottom: 4px;
+    position: relative;
+  }
+
+  .dist-card:nth-child(1) .dist-pct { color: var(--acid); }
+  .dist-card:nth-child(2) .dist-pct { color: var(--ice); }
+  .dist-card:nth-child(3) .dist-pct { color: var(--fire); }
+  .dist-card:nth-child(4) .dist-pct { color: var(--night); }
+
+  .dist-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--dim);
+    position: relative;
+  }
+
+  /* ── KPI GRID ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 700px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 400px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 20px;
+    transition: border-color .2s;
+  }
+
+  .kpi-card:hover { border-color: var(--acid); }
+
+  .kpi-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 8px;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: var(--acid);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .kpi-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+
+  .kpi-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--acid), var(--ice));
+    border-radius: 2px;
+    width: 0;
+    transition: width 1.4s cubic-bezier(.16,1,.3,1);
+  }
+
+  /* ── WEEKLY OUTPUT ── */
+  .output-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 700px) { .output-row { grid-template-columns: 1fr; } }
+
+  .output-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .output-type {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+  }
+
+  .output-type.reel  { color: var(--fire); }
+  .output-type.carousel { color: var(--night); }
+  .output-type.story { color: var(--ice); }
+
+  .output-day {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -.02em;
+  }
+
+  .output-purpose {
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  .output-goal {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--mid);
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── GOLDEN RULES ── */
+  .rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .rule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    transition: background .2s;
+  }
+
+  .rule-item:hover { background: rgba(200,255,0,.02); }
+
+  .rule-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--acid);
+    flex-shrink: 0;
+    width: 28px;
+    padding-top: 2px;
+  }
+
+  .rule-text {
+    font-size: 15px;
+    color: var(--light);
+    font-weight: 500;
+  }
+
+  /* ── PRINCIPLES ── */
+  .principles-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 600px) { .principles-grid { grid-template-columns: 1fr; } }
+
+  .principle-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: border-color .2s;
+  }
+
+  .principle-card:hover { border-color: var(--acid); }
+
+  .principle-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(200,255,0,.08);
+    border: 1px solid rgba(200,255,0,.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .principle-text {
+    font-size: 13px;
+    color: var(--light);
+    line-height: 1.5;
+  }
+
+  /* ── BRAND MANIFESTO ── */
+  .manifesto {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 48px 40px;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .manifesto::before {
+    content: '';
+    position: absolute;
+    top: -80px; left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(200,255,0,.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .manifesto-quote {
+    font-size: clamp(20px, 4vw, 32px);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: var(--white);
+    max-width: 700px;
+    margin: 0 auto 24px;
+    position: relative;
+    line-height: 1.3;
+  }
+
+  .manifesto-quote em {
+    color: var(--acid);
+    font-style: normal;
+  }
+
+  .feeling-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    position: relative;
+  }
+
+  .feeling-tag {
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    transition: transform .2s;
+    cursor: default;
+  }
+
+  .feeling-tag:hover { transform: scale(1.06); }
+
+  .ft-1 { background: rgba(200,255,0,.12); color: var(--acid); border: 1px solid rgba(200,255,0,.3); }
+  .ft-2 { background: rgba(255,77,26,.12);  color: var(--fire); border: 1px solid rgba(255,77,26,.3); }
+  .ft-3 { background: rgba(0,212,255,.12);  color: var(--ice);  border: 1px solid rgba(0,212,255,.3); }
+  .ft-4 { background: rgba(123,47,255,.12); color: var(--night); border: 1px solid rgba(123,47,255,.3); }
+  .ft-5 { background: rgba(200,255,0,.12); color: var(--acid); border: 1px solid rgba(200,255,0,.3); }
+  .ft-6 { background: rgba(255,77,26,.12);  color: var(--fire); border: 1px solid rgba(255,77,26,.3); }
+  .ft-7 { background: rgba(0,212,255,.12);  color: var(--ice);  border: 1px solid rgba(0,212,255,.3); }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .footer-brand {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+    letter-spacing: .1em;
+  }
+
+  .footer-brand span { color: var(--acid); }
+
+  .footer-version {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── ANIMATED SCAN LINE ── */
+  .scanline {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--acid), transparent);
+    animation: scan 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 100;
+    opacity: .3;
+  }
+
+  @keyframes scan {
+    0%   { top: 0; opacity: .3; }
+    50%  { top: 100vh; opacity: .1; }
+    100% { top: 0; opacity: .3; }
+  }
+
+  /* ── STORY SLIDES DISPLAY ── */
+  .story-slides {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .story-slide-pill {
+    font-size: 9px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    background: rgba(255,255,255,.05);
+    border-radius: 3px;
+    color: var(--mid);
+  }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+<div class="grid-bg"></div>
+
+<div class="wrapper">
+
+  <!-- ── HEADER ── -->
+  <header class="header reveal">
+    <div class="logo-area">
+      <div class="logo-eyebrow">// Weekly Content System v1.0</div>
+      <h1 class="logo-title">BISON <span>Z</span></h1>
+      <p class="logo-sub">This isn't an Instagram page. It's an adventure series.</p>
+    </div>
+    <div class="header-meta">
+      <div class="badge badge-acid"><span class="dot"></span>Solo Creator Mode</div>
+      <div class="badge badge-fire"><span class="dot"></span>6 Days Active · 1 Day Rest</div>
+      <div class="badge badge-ice"><span class="dot"></span>Gen Z Adventure Travel</div>
+    </div>
+  </header>
+
+  <!-- ── BRAND MANIFESTO ── -->
+  <section class="section reveal">
+    <div class="manifesto">
+      <p class="manifesto-quote">
+        یک صفحه اینستاگرام نیست —<br>
+        این یک <em>سری ماجراجویی</em> است.
+      </p>
+      <div class="feeling-tags">
+        <span class="feeling-tag ft-1">Reality Show</span>
+        <span class="feeling-tag ft-2">Adventure</span>
+        <span class="feeling-tag ft-3">Friendship</span>
+        <span class="feeling-tag ft-4">Freedom</span>
+        <span class="feeling-tag ft-5">FOMO</span>
+        <span class="feeling-tag ft-6">Community</span>
+        <span class="feeling-tag ft-7">Gen Z</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WEEKLY CALENDAR ── -->
+  <section class="section reveal">
+    <div class="section-label">01 — تقویم هفتگی</div>
+    <h2 class="section-title">Weekly Production Cycle</h2>
+    <div class="calendar-grid" style="margin-top:24px">
+
+      <!-- Saturday -->
+      <div class="day-card sat">
+        <div class="day-accent"></div>
+        <span class="day-emoji">🧠</span>
+        <div class="day-name">شنبه</div>
+        <div class="day-title">Planning</div>
+        <div class="day-goal">تحلیل اینسایت‌ها، رقبا و آیدیا‌پردازی برای کل هفته</div>
+        <div class="day-tasks">
+          <div class="day-task">Analyze Instagram Insights</div>
+          <div class="day-task">Research trends</div>
+          <div class="day-task">Write scenarios</div>
+          <div class="day-task">Prepare shot list</div>
+          <div class="day-task">Check gear</div>
+        </div>
+        <div class="day-publish">
+          <div class="publish-type">📱 Full Story · 3-5</div>
+          <div class="publish-theme">Poll · Quiz · Destination teaser</div>
+        </div>
+      </div>
+
+      <!-- Sunday -->
+      <div class="day-card sun">
+        <div class="day-accent"></div>
+        <span class="day-emoji">🎥</span>
+        <div class="day-name">یکشنبه</div>
+        <div class="day-title">Production</div>
+        <div class="day-goal">ضبط تمام محتوای موردنیاز برای کل هفته در یک روز</div>
+        <div class="day-tasks">
+          <div class="day-task">Video shooting</div>
+          <div class="day-task">Photography</div>
+          <div class="day-task">Drone</div>
+          <div class="day-task">B-Roll</div>
+          <div class="day-task">Behind the scenes</div>
+        </div>
+        <div class="day-publish">
+          <div class="publish-type">📱 Full Story · 3-5</div>
+          <div class="publish-theme">Raw moments · Travel vibes</div>
+        </div>
+      </div>
+
+      <!-- Monday -->
+      <div class="day-card mon">
+        <div class="day-accent"></div>
+        <span class="day-emoji">✂️</span>
+        <div class="day-name">دوشنبه</div>
+        <div class="day-title">Editing</div>
+        <div class="day-goal">ادیت هر سه ریل + تامبنیل‌ها + اکسپورت نهایی</div>
+        <div class="day-tasks">
+          <div class="day-task">Select footage</div>
+          <div class="day-task">Edit Reel 1</div>
+          <div class="day-task">Edit Reel 2</div>
+          <div class="day-task">Edit Reel 3</div>
+          <div class="day-task">Export videos</div>
+        </div>
+        <div class="day-publish">
+          <div class="publish-type">🎬 Reel</div>
+          <div class="publish-theme">Adventure Story · Emotional Retention</div>
+        </div>
+      </div>
+
+      <!-- Tuesday -->
+      <div class="day-card tue">
+        <div class="day-accent"></div>
+        <span class="day-emoji">📸</span>
+        <div class="day-name">سه‌شنبه</div>
+        <div class="day-title">Design</div>
+        <div class="day-goal">ساخت کاروسل آموزشی — محتوای Saveable</div>
+        <div class="day-tasks">
+          <div class="day-task">Design carousel</div>
+          <div class="day-task">Write caption</div>
+          <div class="day-task">Write CTA</div>
+          <div class="day-task">Prepare hashtags</div>
+        </div>
+        <div class="day-publish">
+          <div class="publish-type">📊 Carousel</div>
+          <div class="publish-theme">Destination Guide · Packing Tips</div>
+        </div>
+      </div>
+
+      <!-- Wednesday -->
+      <div class="day-card wed">
+        <div class="day-accent"></div>
+        <span class="day-emoji">💬</span>
+        <div class="day-name">چهارشنبه</div>
+        <div class="day-title">Engagement</div>
+        <div class="day-goal">تقویت جامعه — ریپلای، DM، کامیونیتی اینتراکشن</div>
+        <div class="day-tasks">
+          <div class="day-task">Reply to comments</div>
+          <div class="day-task">Reply to DMs</div>
+          <div class="day-task">Community interaction</div>
+        </div>
+        <div class="day-publish">
+          <div class="publish-type">🎬 Reel</div>
+          <div class="publish-theme">Comedy · Chaos · Tribe</div>
+        </div>
+      </div>
+
+      <!-- Thursday -->
+      <div class="day-card thu">
+        <div class="day-accent"></div>
+        <span class="day-emoji">📊</span>
+        <div class="day-name">پنجشنبه</div>
+        <div class="day-title">Analytics</div>
+        <div class="day-goal">بررسی KPIها + انتشار ریل کانورژن + FOMO</div>
+        <div class="day-tasks">
+          <div class="day-task">Review KPIs</div>
+          <div class="day-task">Watch Rate</div>
+          <div class="day-task">Retention</div>
+          <div class="day-task">Plan improvements</div>
+        </div>
+        <div class="day-publish">
+          <div class="publish-type">🎬 Reel</div>
+          <div class="publish-theme">Next Tour · FOMO · Conversion</div>
+        </div>
+      </div>
+
+      <!-- Friday -->
+      <div class="day-card fri rest-card">
+        <div class="day-accent"></div>
+        <span class="day-emoji">🌿</span>
+        <div class="day-name">جمعه</div>
+        <div class="day-title">Rest</div>
+        <div class="day-goal">استراحت کامل. ریست خلاقانه. هیچ تولید و پابلیشی نیست.</div>
+        <div class="day-tasks">
+          <div class="day-task">No production</div>
+          <div class="day-task">No editing</div>
+          <div class="day-task">No publishing</div>
+          <div class="day-task">Recharge for next week</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── CONTENT DISTRIBUTION ── -->
+  <section class="section reveal">
+    <div class="section-label">02 — توزیع محتوا</div>
+    <h2 class="section-title">Content Mix Strategy</h2>
+    <div class="dist-grid" style="margin-top:24px">
+      <div class="dist-card">
+        <div class="dist-fill" style="--pct:35%"></div>
+        <div class="dist-pct">35%</div>
+        <div class="dist-label">Storytelling</div>
+      </div>
+      <div class="dist-card">
+        <div class="dist-fill" style="--pct:25%"></div>
+        <div class="dist-pct">25%</div>
+        <div class="dist-label">Education</div>
+      </div>
+      <div class="dist-card">
+        <div class="dist-fill" style="--pct:25%"></div>
+        <div class="dist-pct">25%</div>
+        <div class="dist-label">Entertainment</div>
+      </div>
+      <div class="dist-card">
+        <div class="dist-fill" style="--pct:15%"></div>
+        <div class="dist-pct">15%</div>
+        <div class="dist-label">Sales</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WEEKLY OUTPUT ── -->
+  <section class="section reveal">
+    <div class="section-label">03 — خروجی هفتگی</div>
+    <h2 class="section-title">Weekly Publishing Output</h2>
+    <div style="margin-top:24px">
+      <div class="output-row">
+        <div class="output-card">
+          <div class="output-type reel">🎬 Reel · دوشنبه</div>
+          <div class="output-day">Story Reel</div>
+          <div class="output-purpose">Adventure Story — داستانگویی احساسی</div>
+          <div class="output-goal">🎯 Retention &amp; Emotion</div>
+        </div>
+        <div class="output-card">
+          <div class="output-type reel">🎬 Reel · چهارشنبه</div>
+          <div class="output-day">Chaos Reel</div>
+          <div class="output-purpose">Comedy · Chaos · Tribe — محتوای وایرال</div>
+          <div class="output-goal">🔥 Shares &amp; Virality</div>
+        </div>
+        <div class="output-card">
+          <div class="output-type reel">🎬 Reel · پنجشنبه</div>
+          <div class="output-day">FOMO Reel</div>
+          <div class="output-purpose">Next Tour — محتوای کانورژن</div>
+          <div class="output-goal">💰 Bookings &amp; FOMO</div>
+        </div>
+      </div>
+      <div class="output-row">
+        <div class="output-card">
+          <div class="output-type carousel">📊 Carousel · سه‌شنبه</div>
+          <div class="output-day">Educational</div>
+          <div class="output-purpose">Destination Guide / Tips / Checklist</div>
+          <div class="output-goal">🔖 Education &amp; Saves</div>
+        </div>
+        <div class="output-card" style="grid-column: span 2;">
+          <div class="output-type story">📱 Stories · شنبه تا پنجشنبه</div>
+          <div class="output-day">Daily Stories</div>
+          <div class="output-purpose">5 روز Full Story (3-5 اسلاید) + 1 روز Single Story</div>
+          <div class="output-goal">👁️ Community &amp; Daily Presence</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── KPI TARGETS ── -->
+  <section class="section reveal">
+    <div class="section-label">04 — اهداف کلیدی</div>
+    <h2 class="section-title">KPI Targets</h2>
+    <div class="kpi-grid" style="margin-top:24px">
+      <div class="kpi-card">
+        <div class="kpi-name">Watch Rate</div>
+        <div class="kpi-value">70%+</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="--w:70%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-name">Avg. View Duration</div>
+        <div class="kpi-value">65%+</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="--w:65%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-name">Save Rate</div>
+        <div class="kpi-value">8%+</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="--w:40%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-name">Share Rate</div>
+        <div class="kpi-value">10%+</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="--w:50%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-name">Story Completion</div>
+        <div class="kpi-value">75%+</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="--w:75%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-name">Comment Rate</div>
+        <div class="kpi-value">5%+</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="--w:25%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-name">Profile Visit</div>
+        <div class="kpi-value">15%+</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="--w:55%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-name">Tour Inquiry</div>
+        <div class="kpi-value">3%+</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="--w:15%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-name">Booking Conversion</div>
+        <div class="kpi-value">1%+</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="--w:5%"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WORKFLOW PRINCIPLES ── -->
+  <section class="section reveal">
+    <div class="section-label">05 — اصول کاری</div>
+    <h2 class="section-title">Workflow Principles</h2>
+    <div class="principles-grid" style="margin-top:24px">
+      <div class="principle-card">
+        <div class="principle-icon">1️⃣</div>
+        <div class="principle-text">هر روز فقط یک مسئولیت اصلی دارد — تداخل نقش‌ها ممنوع</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-icon">✂️</div>
+        <div class="principle-text">هرگز تولید و ادیت را در یک روز انجام نده — Batch فکر کن</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-icon">📦</div>
+        <div class="principle-text">Batch create · Batch edit · Batch publish — سیستمی فکر کن</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-icon">🎯</div>
+        <div class="principle-text">کیفیت همیشه بر کمیت اولویت دارد — منتشر نکن تا آماده بشه</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-icon">📖</div>
+        <div class="principle-text">یکپارچگی استوری‌تلینگ در تمام هفته حفظ بشه</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-icon">🌍</div>
+        <div class="principle-text">هر تور باید حداقل یک هفته کامل از محتوا تولید کنه</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── GOLDEN RULES ── -->
+  <section class="section reveal">
+    <div class="section-label">06 — قوانین طلایی</div>
+    <h2 class="section-title">Golden Rules</h2>
+    <div class="rules-list" style="margin-top:24px">
+      <div class="rule-item">
+        <div class="rule-num">01</div>
+        <div class="rule-text">One role per day — یک نقش، یک روز</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">02</div>
+        <div class="rule-text">Never edit on production day — روز فیلمبرداری، دست به ادیت نزن</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">03</div>
+        <div class="rule-text">Never produce content on publishing day — روز انتشار، دوربین بذار کنار</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">04</div>
+        <div class="rule-text">Create once, publish all week — یک‌بار بساز، یک هفته منتشر کن</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">05</div>
+        <div class="rule-text">Every tour → at least one full week of content — از هر سفر، حداکثر استخراج کن</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">06</div>
+        <div class="rule-text">Every content must support the Bison Z story universe — هر پست بخشی از یک روایت بزرگ‌تر است</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer reveal">
+    <div class="footer-brand">BISON <span>Z</span> — Content System</div>
+    <div class="footer-version">v1.0 · Solo Creator · Weekly Workflow</div>
+  </footer>
+
+</div>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        // Animate KPI bars
+        e.target.querySelectorAll('.kpi-bar-fill').forEach(bar => {
+          const w = bar.style.getPropertyValue('--w') || bar.getAttribute('style').match(/--w:(\S+)/)?.[1];
+          if (w) setTimeout(() => bar.style.width = w, 100);
+        });
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Day card hover glow
+  document.querySelectorAll('.day-card:not(.rest-card)').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      const color = getComputedStyle(card).getPropertyValue('--card-color').trim();
+    });
+  });
+</script>
+
+</body>
+</html>
